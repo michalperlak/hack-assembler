@@ -1,13 +1,13 @@
 plugins {
-    kotlin("jvm") version "1.3.60-eap-143"
+    kotlin("jvm") version "1.3.61"
 }
 
-group = "org.example"
+group = "dev.talkischeap"
 version = "1.0-SNAPSHOT"
 
 repositories {
-    maven { setUrl("https://dl.bintray.com/kotlin/kotlin-eap") }
     mavenCentral()
+    jcenter()
 }
 
 dependencies {
