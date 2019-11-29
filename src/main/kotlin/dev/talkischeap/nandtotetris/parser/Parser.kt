@@ -2,7 +2,6 @@ package dev.talkischeap.nandtotetris.parser
 
 import dev.talkischeap.nandtotetris.*
 import dev.talkischeap.nandtotetris.symbol.SymbolTable
-import kotlin.IllegalStateException
 
 class Parser {
     fun parse(symbolicCode: List<String>, symbolTable: SymbolTable): List<Instruction> {
@@ -14,22 +13,32 @@ class Parser {
     private fun buildInstruction(code: String, symbolTable: SymbolTable): Instruction =
         when {
             code.isAInstruction() -> AInstruction(symbolTable.resolve(code.drop(1)))
-            code.isCInstruction() -> buildCInstruction(code, symbolTable)
+            code.isCInstruction() -> buildCInstruction(code)
             else -> throw IllegalStateException("Unrecognized instruction: $code")
         }
 
-    private fun buildCInstruction(code: String, symbolTable: SymbolTable): Instruction {
-        val parts = code
+    private fun buildCInstruction(code: String): Instruction {
+        val instruction = getFullCInstruction(code)
+        val parts = instruction
             .split('=')
             .flatMap { it.split(';') }
             .map { it.trim() }
 
         return CInstruction(
-            dest = DEST_TABLE[parts[0]]  ?: throw IllegalStateException("Unknown dest: ${parts[0]}"),
+            dest = DEST_TABLE[parts[0]] ?: throw IllegalStateException("Unknown dest: ${parts[0]}"),
             comp = COMP_TABLE[parts[1]] ?: throw IllegalStateException("Unknown comp: ${parts[1]}"),
             jump = JUMP_TABLE[parts[2]] ?: throw IllegalStateException("Unknown jump: ${parts[1]}")
         )
     }
+
+    private fun getFullCInstruction(code: String): String =
+        if (!code.contains('=')) {
+            " =$code"
+        } else if (!code.contains(';')) {
+            "$code; "
+        } else {
+            code
+        }
 
     companion object {
         private val COMP_TABLE = mapOf(

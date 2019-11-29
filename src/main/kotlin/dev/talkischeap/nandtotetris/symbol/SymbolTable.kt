@@ -8,7 +8,7 @@ typealias Symbol = String
 class SymbolTable private constructor(
     private val symbols: Map<String, Int>
 ) {
-    fun resolve(symbol: Symbol): Int = symbols[symbol] ?: -1
+    fun resolve(symbol: Symbol): Int = symbols[symbol] ?: symbol.toIntOrNull() ?: -1
 
     companion object {
         fun prepare(code: List<String>): SymbolTable = SymbolTable(readSymbols(code))
@@ -25,9 +25,10 @@ class SymbolTable private constructor(
             for (instruction in code) {
                 if (instruction.isAInstruction() || instruction.isCInstruction()) {
                     currentIndex++
+                    continue
                 }
                 if (isLabelDeclaration(instruction)) {
-                    symbols[instruction.drop(1)] = currentIndex + 1
+                    symbols[getLabelName(instruction)] = currentIndex
                 }
             }
             return symbols
@@ -38,7 +39,7 @@ class SymbolTable private constructor(
             var currentVariableAddress = VARIABLE_START_ADDRESS
             code
                 .filter { isNotDeclaredVariableAccess(it, symbols) }
-                .map { it.drop(1) }
+                .map { getVariableName(it) }
                 .forEach {
                     if (!variables.containsKey(it)) {
                         variables[it] = currentVariableAddress++
@@ -54,8 +55,17 @@ class SymbolTable private constructor(
                 return false
             }
             val symbol = instruction.drop(1)
-            return !symbols.containsKey(symbol)
+            return !symbols.containsKey(symbol) && symbol.toIntOrNull() == null
         }
+
+        private fun getVariableName(variableRef: String) = variableRef
+            .drop(1)
+            .trim()
+
+        private fun getLabelName(labelDecl: String) = labelDecl
+            .drop(1)
+            .trim()
+            .dropLast(1)
 
         private val PREDEFINED_SYMBOLS = mapOf(
             "SCREEN" to 16384,
